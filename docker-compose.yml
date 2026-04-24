@@ -18,9 +18,7 @@ services:
           memory: 32M
 
   api1:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/toto9in/crab-antiagiota:latest
     platform: linux/amd64
     depends_on:
       - db
@@ -36,9 +34,7 @@ services:
           memory: 48M
 
   api2:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/toto9in/crab-antiagiota:latest
     platform: linux/amd64
     depends_on:
       - db
