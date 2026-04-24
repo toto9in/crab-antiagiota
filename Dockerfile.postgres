@@ -14,7 +14,7 @@ RUN set -eux; \
     PID=$!; \
     until pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done; \
     psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT count(*) FROM vetores_rinha;"; \
-    pg_ctl -D "$PGDATA" -m fast -w stop; \
+    gosu postgres pg_ctl -D "$PGDATA" -m fast -w stop; \
     wait "$PID" || true; \
     rm -f /docker-entrypoint-initdb.d/01-init.sql
 
