@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+
+FROM pgvector/pgvector:pg18-trixie AS build
+
+ENV POSTGRES_DB=rinha2026 \
+    POSTGRES_USER=rinha2026 \
+    POSTGRES_PASSWORD=rinha2026 \
+    PGDATA=/var/lib/postgresql/data
+
+COPY init.sql /docker-entrypoint-initdb.d/01-init.sql
+
+RUN set -eux; \
+    docker-entrypoint.sh postgres & \
+    PID=$!; \
+    until pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done; \
+    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT count(*) FROM vetores_rinha;"; \
+    pg_ctl -D "$PGDATA" -m fast -w stop; \
+    wait "$PID" || true; \
+    rm -f /docker-entrypoint-initdb.d/01-init.sql
+
+FROM pgvector/pgvector:pg18-trixie
+
+ENV POSTGRES_DB=rinha2026 \
+    POSTGRES_USER=rinha2026 \
+    POSTGRES_PASSWORD=rinha2026 \
+    PGDATA=/var/lib/postgresql/data
+
+COPY --from=build --chown=postgres:postgres /var/lib/postgresql/data /var/lib/postgresql/data
