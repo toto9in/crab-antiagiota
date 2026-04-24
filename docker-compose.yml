@@ -17,11 +17,19 @@ services:
           cpus: "0.10"
           memory: 32M
 
+  db-ready:
+    image: postgres:18-alpine
+    platform: linux/amd64
+    depends_on:
+      - db
+    command: sh -c 'until pg_isready -h db -U rinha2026; do sleep 1; done'
+
   api1:
     image: ghcr.io/toto9in/crab-antiagiota:latest
     platform: linux/amd64
     depends_on:
-      - db
+      db-ready:
+        condition: service_completed_successfully
     environment:
       PORT: "3000"
       DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
@@ -37,7 +45,8 @@ services:
     image: ghcr.io/toto9in/crab-antiagiota:latest
     platform: linux/amd64
     depends_on:
-      - db
+      db-ready:
+        condition: service_completed_successfully
     environment:
       PORT: "3000"
       DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
@@ -58,6 +67,8 @@ services:
       POSTGRES_USER: rinha2026
     ports:
       - "55432:5432"
+    volumes:
+      - ./resources/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     cpus: 0.54
     mem_limit: 222m
     deploy:

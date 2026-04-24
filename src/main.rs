@@ -2,8 +2,6 @@ use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    crab_antiagiota::seed::run().await?;
-
     let state = crab_antiagiota::state::AppState::from_env().await?;
     let app = crab_antiagiota::api::router(state);
     let port = std::env::var("PORT")
