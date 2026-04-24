@@ -1,0 +1,9 @@
+[package]
+name = "crab-antiagiota"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.9"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "macros"] }
+tokio = { version = "1.52.1", features = ["full"] }
