@@ -4,7 +4,8 @@ use std::net::SocketAddr;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     crab_antiagiota::seed::run().await?;
 
-    let app = crab_antiagiota::api::router();
+    let state = crab_antiagiota::state::AppState::from_env().await?;
+    let app = crab_antiagiota::api::router(state);
     let port = std::env::var("PORT")
         .ok()
         .and_then(|value| value.parse::<u16>().ok())

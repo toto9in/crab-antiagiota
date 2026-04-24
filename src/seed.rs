@@ -9,7 +9,6 @@ struct Ref {
 }
 
 const SCHEMA: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/resources/schema.sql"));
-
 pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://rinha2026:rinha2026@localhost:55432/rinha2026".into());
@@ -21,19 +20,20 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .connect(&database_url)
         .await?;
 
-    for stmt in SCHEMA.split(';').map(str::trim).filter(|s| !s.is_empty()) {
-        sqlx::query(stmt).execute(&pool).await?;
-    }
-
     sqlx::query("SELECT pg_advisory_lock(7283746192837465)")
         .execute(&pool)
         .await?;
+
+    for stmt in SCHEMA.split(';').map(str::trim).filter(|s| !s.is_empty()) {
+        sqlx::query(stmt).execute(&pool).await?;
+    }
 
     let existing: i64 = sqlx::query_scalar("SELECT count(*) FROM vetores_rinha")
         .fetch_one(&pool)
         .await?;
 
     if existing > 0 {
+        ensure_reference_index(&pool).await?;
         return Ok(());
     }
 
@@ -54,11 +54,21 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     .execute(&pool)
     .await?;
 
+    ensure_reference_index(&pool).await?;
+
+    Ok(())
+}
+
+async fn ensure_reference_index(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query("DROP INDEX IF EXISTS vetores_rinha_vector_hnsw_l2_m32_ef128_idx")
+        .execute(pool)
+        .await?;
+
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS vetores_rinha_vector_hnsw_l2_idx \
          ON vetores_rinha USING hnsw (vector vector_l2_ops)",
     )
-    .execute(&pool)
+    .execute(pool)
     .await?;
 
     Ok(())
