@@ -59,7 +59,7 @@ services:
           memory: 48M
 
   db:
-    image: pgvector/pgvector:pg18-trixie
+    image: ghcr.io/toto9in/crab-antiagiota-db:latest
     platform: linux/amd64
     environment:
       POSTGRES_DB: rinha2026
@@ -67,8 +67,6 @@ services:
       POSTGRES_USER: rinha2026
     ports:
       - "55432:5432"
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     cpus: 0.54
     mem_limit: 222m
     deploy:
