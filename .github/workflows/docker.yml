@@ -1,0 +1,32 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v7.1.0
+        with:
+          image: crab-antiagiota
+          registry: ghcr.io
+          githubOrg: toto9in
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          enableBuildKit: true
+          tags: latest,${{ github.sha }}

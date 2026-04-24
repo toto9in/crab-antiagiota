@@ -7,3 +7,6 @@ edition = "2024"
 axum = "0.8.9"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "macros"] }
 tokio = { version = "1.52.1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+pgvector = { version = "0.4", features = ["sqlx"] }
