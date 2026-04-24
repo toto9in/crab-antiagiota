@@ -1,0 +1,78 @@
+services:
+  lb:
+    image: nginx:1.27-alpine
+    platform: linux/amd64
+    depends_on:
+      - api1
+      - api2
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    cpus: 0.10
+    mem_limit: 32m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: 32M
+
+  db-ready:
+    image: postgres:18-alpine
+    platform: linux/amd64
+    depends_on:
+      - db
+    command: sh -c 'until pg_isready -h db -U rinha2026; do sleep 1; done'
+
+  api1:
+    image: ghcr.io/toto9in/crab-antiagiota:latest
+    platform: linux/amd64
+    depends_on:
+      db-ready:
+        condition: service_completed_successfully
+    environment:
+      PORT: "3000"
+      DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
+    cpus: 0.18
+    mem_limit: 48m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.18"
+          memory: 48M
+
+  api2:
+    image: ghcr.io/toto9in/crab-antiagiota:latest
+    platform: linux/amd64
+    depends_on:
+      db-ready:
+        condition: service_completed_successfully
+    environment:
+      PORT: "3000"
+      DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
+    cpus: 0.18
+    mem_limit: 48m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.18"
+          memory: 48M
+
+  db:
+    image: pgvector/pgvector:pg18-trixie
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: rinha2026
+      POSTGRES_PASSWORD: rinha2026
+      POSTGRES_USER: rinha2026
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./resources/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    cpus: 0.54
+    mem_limit: 222m
+    deploy:
+      resources:
+        limits:
+          cpus: "0.54"
+          memory: 222M
