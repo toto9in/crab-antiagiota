@@ -34,8 +34,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 100M
+          cpus: "0.15"
+          memory: 60M
 
   api2:
     image: ghcr.io/toto9in/crab-antiagiota:latest
@@ -49,8 +49,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 100M
+          cpus: "0.15"
+          memory: 60M
 
   db:
     image: ghcr.io/toto9in/crab-antiagiota-db:latest
@@ -64,5 +64,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.40"
-          memory: 120M
+          cpus: "0.60"
+          memory: 200M
