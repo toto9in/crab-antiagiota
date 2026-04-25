@@ -9,13 +9,11 @@ services:
       - "9999:9999"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    cpus: 0.10
-    mem_limit: 32m
     deploy:
       resources:
         limits:
           cpus: "0.10"
-          memory: 32M
+          memory: 30M
 
   db-ready:
     image: postgres:18-alpine
@@ -33,13 +31,11 @@ services:
     environment:
       PORT: "3000"
       DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
-    cpus: 0.18
-    mem_limit: 48m
     deploy:
       resources:
         limits:
-          cpus: "0.18"
-          memory: 48M
+          cpus: "0.16"
+          memory: 40M
 
   api2:
     image: ghcr.io/toto9in/crab-antiagiota:latest
@@ -50,13 +46,11 @@ services:
     environment:
       PORT: "3000"
       DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
-    cpus: 0.18
-    mem_limit: 48m
     deploy:
       resources:
         limits:
-          cpus: "0.18"
-          memory: 48M
+          cpus: "0.16"
+          memory: 40M
 
   db:
     image: ghcr.io/toto9in/crab-antiagiota-db:latest
@@ -67,10 +61,8 @@ services:
       POSTGRES_USER: rinha2026
     ports:
       - "55432:5432"
-    cpus: 0.54
-    mem_limit: 222m
     deploy:
       resources:
         limits:
-          cpus: "0.54"
-          memory: 222M
+          cpus: "0.58"
+          memory: 240M
