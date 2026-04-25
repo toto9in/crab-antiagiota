@@ -24,54 +24,64 @@ pub const NORM: Normalization = Normalization {
     max_merchant_avg_amount: 10_000.0,
 };
 
+const INV_MAX_AMOUNT: f32 = 1.0 / 10_000.0;
+const INV_MAX_INSTALLMENTS: f32 = 1.0 / 12.0;
+const INV_AMOUNT_VS_AVG_RATIO: f32 = 1.0 / 10.0;
+const INV_HOUR: f32 = 1.0 / 23.0;
+const INV_DOW: f32 = 1.0 / 6.0;
+const INV_MAX_MINUTES: f32 = 1.0 / 1_440.0;
+const INV_MAX_KM: f32 = 1.0 / 1_000.0;
+const INV_MAX_TX_COUNT_24H: f32 = 1.0 / 20.0;
+const INV_MAX_MERCHANT_AVG_AMOUNT: f32 = 1.0 / 10_000.0;
+
 pub fn normalize_request(req: &FraudRequest) -> [f32; FEATURE_DIM] {
-    let amount = clamp01(req.transaction.amount / NORM.max_amount);
-    let installments = clamp01(req.transaction.installments as f32 / NORM.max_installments);
+    let amount = clamp01(req.transaction.amount * INV_MAX_AMOUNT);
+    let installments = clamp01(req.transaction.installments as f32 * INV_MAX_INSTALLMENTS);
 
     let amount_vs_avg_raw = if req.customer.avg_amount > 0.0 {
-        (req.transaction.amount / req.customer.avg_amount) / NORM.amount_vs_avg_ratio
+        (req.transaction.amount / req.customer.avg_amount) * INV_AMOUNT_VS_AVG_RATIO
     } else {
         1.0
     };
     let amount_vs_avg = clamp01(amount_vs_avg_raw);
 
-    let hour_of_day = req.transaction.requested_at.hour() as f32 / 23.0;
+    let hour_of_day = req.transaction.requested_at.hour() as f32 * INV_HOUR;
     let day_of_week = req
         .transaction
         .requested_at
         .weekday()
         .num_days_from_monday() as f32
-        / 6.0;
+        * INV_DOW;
 
     let minutes_since_last_tx = req.last_transaction.as_ref().map_or(-1.0, |last| {
-        let minutes = (req.transaction.requested_at - last.timestamp)
-            .num_minutes()
-            .max(0) as f32;
-        clamp01(minutes / NORM.max_minutes)
+        let secs = req.transaction.requested_at.timestamp() - last.timestamp.timestamp();
+        let minutes = (secs / 60).max(0) as f32;
+        clamp01(minutes * INV_MAX_MINUTES)
     });
 
     let km_from_last_tx = req
         .last_transaction
         .as_ref()
-        .map_or(-1.0, |last| clamp01(last.km_from_current / NORM.max_km));
+        .map_or(-1.0, |last| clamp01(last.km_from_current * INV_MAX_KM));
 
+    let target_merchant = req.merchant.id.as_str();
     let unknown_merchant = if req
         .customer
         .known_merchants
         .iter()
-        .any(|merchant_id| merchant_id == &req.merchant.id)
+        .any(|m| m.as_str() == target_merchant)
     {
         0.0
     } else {
         1.0
     };
 
-    let km_from_home = clamp01(req.terminal.km_from_home / NORM.max_km);
-    let tx_count_24h = clamp01(req.customer.tx_count_24h as f32 / NORM.max_tx_count_24h);
+    let km_from_home = clamp01(req.terminal.km_from_home * INV_MAX_KM);
+    let tx_count_24h = clamp01(req.customer.tx_count_24h as f32 * INV_MAX_TX_COUNT_24H);
     let is_online = bool_feature(req.terminal.is_online);
     let card_present = bool_feature(req.terminal.card_present);
     let mcc_risk = mcc_risk(&req.merchant.mcc);
-    let merchant_avg_amount = clamp01(req.merchant.avg_amount / NORM.max_merchant_avg_amount);
+    let merchant_avg_amount = clamp01(req.merchant.avg_amount * INV_MAX_MERCHANT_AVG_AMOUNT);
 
     [
         amount,
@@ -91,12 +101,14 @@ pub fn normalize_request(req: &FraudRequest) -> [f32; FEATURE_DIM] {
     ]
 }
 
+#[inline(always)]
 fn clamp01(v: f32) -> f32 {
     v.clamp(0.0, 1.0)
 }
 
+#[inline(always)]
 fn bool_feature(v: bool) -> f32 {
-    if v { 1.0 } else { 0.0 }
+    v as u8 as f32
 }
 
 #[cfg(test)]
@@ -139,20 +151,20 @@ mod tests {
     fn normalizes_example_payload_in_expected_order() {
         let features = normalize_request(&sample_request());
 
-        assert_eq!(features[0], 0.004112);
+        assert!((features[0] - 0.004112).abs() < 1e-6);
         assert!((features[1] - 0.16666667).abs() < 0.0001);
-        assert_eq!(features[2], 0.05);
+        assert!((features[2] - 0.05).abs() < 1e-6);
         assert!((features[3] - (18.0 / 23.0)).abs() < 0.0001);
         assert!((features[4] - (2.0 / 6.0)).abs() < 0.0001);
         assert_eq!(features[5], -1.0);
         assert_eq!(features[6], -1.0);
         assert!((features[7] - 0.029233104).abs() < 0.0001);
-        assert_eq!(features[8], 0.15);
+        assert!((features[8] - 0.15).abs() < 1e-6);
         assert_eq!(features[9], 0.0);
         assert_eq!(features[10], 1.0);
         assert_eq!(features[11], 0.0);
-        assert_eq!(features[12], 0.15);
-        assert_eq!(features[13], 0.006025);
+        assert!((features[12] - 0.15).abs() < 1e-6);
+        assert!((features[13] - 0.006025).abs() < 1e-6);
     }
 
     #[test]

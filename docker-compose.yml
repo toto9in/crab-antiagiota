@@ -9,13 +9,11 @@ services:
       - "9999:9999"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    cpus: 0.10
-    mem_limit: 32m
     deploy:
       resources:
         limits:
           cpus: "0.10"
-          memory: 32M
+          memory: 30M
 
   db-ready:
     image: postgres:18-alpine
@@ -33,13 +31,11 @@ services:
     environment:
       PORT: "3000"
       DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
-    cpus: 0.18
-    mem_limit: 48m
     deploy:
       resources:
         limits:
-          cpus: "0.18"
-          memory: 48M
+          cpus: "0.15"
+          memory: 60M
 
   api2:
     image: ghcr.io/toto9in/crab-antiagiota:latest
@@ -50,16 +46,14 @@ services:
     environment:
       PORT: "3000"
       DATABASE_URL: postgres://rinha2026:rinha2026@db:5432/rinha2026
-    cpus: 0.18
-    mem_limit: 48m
     deploy:
       resources:
         limits:
-          cpus: "0.18"
-          memory: 48M
+          cpus: "0.15"
+          memory: 60M
 
   db:
-    image: pgvector/pgvector:pg18-trixie
+    image: ghcr.io/toto9in/crab-antiagiota-db:latest
     platform: linux/amd64
     environment:
       POSTGRES_DB: rinha2026
@@ -67,12 +61,8 @@ services:
       POSTGRES_USER: rinha2026
     ports:
       - "55432:5432"
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    cpus: 0.54
-    mem_limit: 222m
     deploy:
       resources:
         limits:
-          cpus: "0.54"
-          memory: 222M
+          cpus: "0.60"
+          memory: 210M
